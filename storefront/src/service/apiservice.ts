@@ -1,95 +1,59 @@
+import axios from 'axios';
 import type { AuthResponse } from '../types/auth';
 import type { Product } from '../types/product';
 import type { RegisterData } from '../types/register';
 
+const api = axios.create({
+  baseURL: 'http://localhost:3000',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message = error.response?.data?.message || error.message || 'An error occurred';
+    throw new Error(message);
+  }
+);
 
 export const apiService = {
-  baseURL: 'http://localhost:3000',
-  
   async login(username: string, password: string): Promise<AuthResponse> {
-    const response = await fetch(`${this.baseURL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
-    }
-    
-    return response.json();
+    return api.post('/auth/login', { username, password });
   },
-
   async register(registerData: RegisterData): Promise<AuthResponse> {
-    const response = await fetch(`${this.baseURL}/auth/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(registerData),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Registration failed');
-    }
-    
-    return response.json();
+    return api.post('/auth/register', registerData);
   },
-  
-  async getMyProducts(token: string): Promise<Product[]> {
-    const response = await fetch(`${this.baseURL}/product/my-products`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+  async getMyProducts(token?: string): Promise<Product[]> {
+    return api.get('/product/my-products', {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined
     });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch products');
-    }
-    
-    return response.json();
   },
-
-  async addProduct(productData: {
-    name: string;
-    description?: string;
-    price: number;
-    rating?: number;
-    image?: string;
-  }, token: string): Promise<Product> {
-    const response = await fetch(`${this.baseURL}/product`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(productData),
+  async addProduct(productData: Product, token?: string): Promise<Product> {
+    return api.post('/product', productData, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to add product');
-    }
-
-    return response.json();
   },
-  
-  async deleteProduct(productId: number, token: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}/product/${productId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+  async deleteProduct(productId: number, token?: string): Promise<void> {
+    return api.delete(`/product/${productId}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined
     });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to delete product');
-    }
+  },
+  async updateProduct(productId: number, productData: Partial<Product>, token?: string): Promise<Product> {
+    return api.patch(`/product/${productId}`, productData, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined
+    });
+  },
+  async getProduct(productId: number): Promise<Product> {
+    return api.get(`/product/${productId}`);
   }
 };
