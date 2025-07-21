@@ -5,12 +5,13 @@ import { apiService } from '../../service/apiservice';
 const ProductListings: React.FC<{ 
   token: string;
   onAddProduct: () => void;
+  onEditProduct: (product: Product) => void;
   refreshTrigger?: number;
-}> = ({ token, onAddProduct, refreshTrigger }) => {
+}> = ({ token, onAddProduct, onEditProduct, refreshTrigger }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-
+  
   useEffect(() => {
     fetchProducts();
   }, [refreshTrigger]);
@@ -127,7 +128,11 @@ const ProductListings: React.FC<{
                     
                     <div className="card-footer bg-transparent">
                       <div className="btn-group w-100" role="group">
-                        <button type="button" className="btn btn-outline-primary">
+                        <button 
+                          type="button" 
+                          className="btn btn-outline-primary"
+                          onClick={() => onEditProduct(product)}
+                        >
                           ✏️ Edit
                         </button>
                         <button
@@ -149,6 +154,5 @@ const ProductListings: React.FC<{
     </div>
   );
 };
-
 
 export default ProductListings;

@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { apiService } from '../../service/apiservice';
 import type { Product } from '../../types/product';
 
-const AddProduct: React.FC<{ 
-  token: string; 
-  onProductAdded: (product: Product) => void;
-  onBack: () => void;
-}> = ({ token, onProductAdded, onBack }) => {
+const ProductForm: React.FC<any> = ({ 
+  token, 
+  mode, 
+  product, 
+  onProductSaved, 
+  onBack 
+}) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -22,19 +24,43 @@ const AddProduct: React.FC<{
     type: 'success' as 'success' | 'error'
   });
 
+  // populate form data when editing
+  useEffect(() => {
+    if (mode === 'edit' && product) {
+      setFormData({
+        name: product.name,
+        description: product.description || '',
+        price: product.price.toString(),
+        rating: product.rating?.toString() || '',
+        image: product.image || ''
+      });
+    }
+  }, [mode, product]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      rating: '',
-      image: ''
-    });
+    if (mode === 'add') {
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        rating: '',
+        image: ''
+      });
+    } else if (product) {
+      // Reset to original values when editing
+      setFormData({
+        name: product.name,
+        description: product.description || '',
+        price: product.price.toString(),
+        rating: product.rating?.toString() || '',
+        image: product.image || ''
+      });
+    }
   };
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -49,20 +75,46 @@ const AddProduct: React.FC<{
     setIsLoading(true);
 
     try {
-      const productData = {
-        name: formData.name,
-        description: formData.description || undefined,
-        price: parseFloat(formData.price),
-        rating: formData.rating ? parseFloat(formData.rating) : undefined,
-        image: formData.image || undefined,
-      };
-
-      const newProduct = await apiService.addProduct(productData, token);
-      showToast('Product added successfully!', 'success');
-      resetForm();
-      onProductAdded(newProduct);
+      const productData: any = {};
       
-      // Auto-redirect back to listings after 2 seconds
+      if (mode === 'add') {
+        // for add, include all fields
+        productData.name = formData.name;
+        if (formData.description) productData.description = formData.description;
+        productData.price = parseFloat(formData.price);
+        if (formData.rating) productData.rating = parseFloat(formData.rating);
+        if (formData.image) productData.image = formData.image;
+      } else {
+        // for edit, only include changed fields
+        if (formData.name !== product?.name) productData.name = formData.name;
+        if (formData.description !== (product?.description || '')) {
+          productData.description = formData.description || undefined;
+        }
+        if (parseFloat(formData.price) !== product?.price) {
+          productData.price = parseFloat(formData.price);
+        }
+        if (formData.rating && parseFloat(formData.rating) !== product?.rating) {
+          productData.rating = parseFloat(formData.rating);
+        }
+        if (formData.image !== (product?.image || '')) {
+          productData.image = formData.image || undefined;
+        }
+      }
+
+      let savedProduct: Product;
+      
+      if (mode === 'add') {
+        savedProduct = await apiService.addProduct(productData, token);
+        showToast('Product added successfully!', 'success');
+        resetForm();
+      } else {
+        savedProduct = await apiService.updateProduct(product!.id, productData, token);
+        showToast('Product updated successfully!', 'success');
+      }
+      
+      onProductSaved(savedProduct);
+      
+      // redirect back after success
       setTimeout(() => {
         onBack();
       }, 2000);
@@ -73,6 +125,11 @@ const AddProduct: React.FC<{
       setIsLoading(false);
     }
   };
+
+  const isEdit = mode === 'edit';
+  const title = isEdit ? 'Edit Product' : 'Add New Product';
+  const subtitle = isEdit ? 'Update your product details' : 'Fill in the details to add a new product';
+  const submitText = isEdit ? 'Update Product' : 'Add Product';
 
   return (
     <div className="container mt-4">
@@ -90,9 +147,9 @@ const AddProduct: React.FC<{
                 </button>
                 <div>
                   <h3 className="fw-bold text-primary mb-1">
-                    Add New Product
+                    {title}
                   </h3>
-                  <p className="text-muted mb-0">Fill in the details to add a new product</p>
+                  <p className="text-muted mb-0">{subtitle}</p>
                 </div>
               </div>
 
@@ -182,21 +239,38 @@ const AddProduct: React.FC<{
                     onChange={handleInputChange}
                     placeholder="https://example.com/image.jpg"
                   />
+                  {formData.image && (
+                    <div className="mt-2">
+                      <small className="text-muted">Preview:</small>
+                      <div className="mt-1">
+                        <img 
+                          src={formData.image} 
+                          alt="Preview" 
+                          className="img-thumbnail"
+                          style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="d-grid gap-2">
                   <button
                     type="submit"
-                    className="btn btn-primary btn-lg"
+                    className={`btn ${isEdit ? 'btn-success' : 'btn-primary'} btn-lg`}
                     disabled={isLoading}
                   >
                     {isLoading ? (
                       <>
                         <span className="spinner-border spinner-border-sm me-2"></span>
-                        Adding Product...
+                        {isEdit ? 'Updating...' : 'Adding Product...'}
                       </>
                     ) : (
-                      'Add Product'
+                      submitText
                     )}
                   </button>
                   
@@ -206,7 +280,7 @@ const AddProduct: React.FC<{
                     onClick={resetForm}
                     disabled={isLoading}
                   >
-                    Clear Form
+                    {isEdit ? 'Reset Changes' : 'Clear Form'}
                   </button>
                 </div>
               </form>
@@ -215,7 +289,6 @@ const AddProduct: React.FC<{
         </div>
       </div>
 
-      {/* Toast */}
       {toast.show && (
         <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 1055 }}>
           <div className="toast show" role="alert">
@@ -239,4 +312,4 @@ const AddProduct: React.FC<{
   );
 };
 
-export default AddProduct;
+export default ProductForm;
