@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { User } from '../../types/user';
 import { apiService } from '../../service/apiservice';
 
-const Login: React.FC<{ onLogin: (token: string, user: User) => void }> = ({ onLogin }) => {
+const Login: React.FC<{ onLogin: (token: string, user: User) => void; onShowRegister: () => void }> = ({ onLogin, onShowRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -42,64 +42,78 @@ const Login: React.FC<{ onLogin: (token: string, user: User) => void }> = ({ onL
                   </div>
                 )}
                 
-                <div className="mb-3">
-                  <label htmlFor="username" className="form-label fw-semibold text-dark">
-                    Username
-                  </label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light border-end-0 rounded-start-3">
-                      <i className="bi bi-person text-muted"></i>
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control border-start-0 rounded-end-3 py-3"
-                      id="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="Enter your username"
-                      required
-                    />
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label htmlFor="username" className="form-label fw-semibold text-dark">
+                      Username
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light border-end-0 rounded-start-3">
+                        <i className="bi bi-person text-muted"></i>
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control border-start-0 rounded-end-3 py-3"
+                        id="username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="Enter your username"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mb-4">
-                  <label htmlFor="password" className="form-label fw-semibold text-dark">
-                    Password
-                  </label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light border-end-0 rounded-start-3">
-                      <i className="bi bi-lock text-muted"></i>
-                    </span>
-                    <input
-                      type="password"
-                      className="form-control border-start-0 rounded-end-3 py-3"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                    />
+                  
+                  <div className="mb-4">
+                    <label htmlFor="password" className="form-label fw-semibold text-dark">
+                      Password
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light border-end-0 rounded-start-3">
+                        <i className="bi bi-lock text-muted"></i>
+                      </span>
+                      <input
+                        type="password"
+                        className="form-control border-start-0 rounded-end-3 py-3"
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                      />
+                    </div>
                   </div>
+                  
+                  <div className="d-grid mb-3">
+                    <button
+                      type="submit"
+                      className="btn btn-primary btn-lg rounded-3 fw-semibold"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          Signing in...
+                        </>
+                      ) : (
+                        'Sign In'
+                      )}
+                    </button>
+                  </div>
+                </form>
+
+                <div className="text-center">
+                  <p className="text-muted mb-0">
+                    Don't have an account?{' '}
+                    <button 
+                      type="button"
+                      className="btn btn-link p-0 text-primary fw-semibold text-decoration-none"
+                      onClick={onShowRegister}
+                    >
+                      Create one here
+                    </button>
+                  </p>
                 </div>
-                
-                <div className="d-grid">
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-lg rounded-3 fw-semibold"
-                    disabled={isLoading}
-                    onClick={handleSubmit}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2"></span>
-                        Signing in...
-                      </>
-                    ) : (
-                      'Sign In'
-                    )}
-                  </button>
-                </div>
-                
+
               </div>
             </div>
           </div>

@@ -1,8 +1,8 @@
 import type { User } from './types/user';
 import { useState, useEffect } from 'react'
-import Login from './components/Login/Login';
 import Navbar from './components/Navbar/Navbar';
 import ProductListings from './components/ProductListing/ProductListings';
+import AuthContainer from './components/AuthContainer/AuthContainer';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -39,7 +39,7 @@ const App: React.FC = () => {
   };
 
   if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
+    return <AuthContainer onAuthenticated={handleLogin} />;
   }
 
   return (

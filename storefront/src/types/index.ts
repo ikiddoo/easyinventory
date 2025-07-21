@@ -1,3 +1,4 @@
-export * from './User';
+export * from './user';
 export * from './auth';
-export * from './Product';
+export * from './product';
+export * from './register';

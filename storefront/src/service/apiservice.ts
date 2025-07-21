@@ -1,5 +1,7 @@
 import type { AuthResponse } from '../types/auth';
 import type { Product } from '../types/product';
+import type { RegisterData } from '../types/register';
+
 
 export const apiService = {
   baseURL: 'http://localhost:3000',
@@ -16,6 +18,23 @@ export const apiService = {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.message || 'Login failed');
+    }
+    
+    return response.json();
+  },
+
+  async register(registerData: RegisterData): Promise<AuthResponse> {
+    const response = await fetch(`${this.baseURL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(registerData),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Registration failed');
     }
     
     return response.json();
