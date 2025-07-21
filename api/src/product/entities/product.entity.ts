@@ -1,36 +1,48 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryKey, Property, ManyToOne, Ref } from '@mikro-orm/core';
 import { User } from '../../user/entities/user.entity';
 
-@Entity('products')
+@Entity({ tableName: 'products' })
 export class Product {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryKey()
+  id!: number;
 
-  @Column({ type: 'varchar', length: 255 })
-  name: string;
+  @Property({ length: 255 })
+  name!: string;
 
-  @Column({ type: 'text', nullable: true })
-  description: string;
+  @Property({ type: 'text', nullable: true })
+  description?: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  price: number;
+  @Property({ type: 'decimal', precision: 10, scale: 2 })
+  price!: number;
 
-  @Column({ type: 'float', nullable: true })
-  rating: number;
+  @Property({ type: 'float', nullable: true })
+  rating?: number;
 
-  @Column({ type: 'text', nullable: true })
-  image: string;
+  @Property({ type: 'text', nullable: true })
+  image?: string;
 
-  @Column({ name: 'user_id' })
-  user_id: number;
+  @Property({ persist: false })
+  user_id!: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @Property({ onCreate: () => new Date() })
+  created_at!: Date;
 
-  @UpdateDateColumn()
-  updated_at: Date;
+  @Property({ onUpdate: () => new Date(), onCreate: () => new Date() })
+  updated_at!: Date;
 
-  @ManyToOne(() => User, user => user.products, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @ManyToOne(() => User, { deleteRule: 'cascade' })
+  user!: Ref<User>;
+
+  constructor() {
+    Object.defineProperty(this, 'user_id', {
+      get: () => this.user?.id,
+      set: (value: number) => {
+        if (value) {
+          this.user = value as any;
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+  }
 }

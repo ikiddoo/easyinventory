@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { Product } from './entities/product.entity';
+import { User } from '../user/entities/user.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -9,57 +10,45 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductService {
   constructor(
     @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    private productRepository: EntityRepository<Product>,
+    private readonly em: EntityManager,
   ) {}
 
   async create(createProductDto: CreateProductDto, userId: number): Promise<Product> {
-    // Create product entity with user ID
-    const product = this.productRepository.create({
-      name: createProductDto.name,
-      description: createProductDto.description,
-      price: createProductDto.price,
-      rating: createProductDto.rating,
-      image: createProductDto.image,
-      user_id: userId,
-    });
-
-    const savedProduct = await this.productRepository.save(product);
-    console.log('Product saved with ID:', savedProduct.id);
+    const user = await this.em.findOneOrFail(User, { id: userId });
     
-    return savedProduct;
+    const product = new Product();
+    product.name = createProductDto.name;
+    product.description = createProductDto.description;
+    product.price = createProductDto.price;
+    product.rating = createProductDto.rating;
+    product.image = createProductDto.image;
+    product.user = user as any;
+
+    await this.em.persistAndFlush(product);
+    console.log('Product saved with ID:', product.id);
+    
+    return product;
   }
 
   async findAll(): Promise<Product[]> {
-    return await this.productRepository.find({
-      relations: ['user'],
-      select: {
-        user: {
-          id: true,
-          fullname: true,
-          username: true,
-        }
-      }
+    return await this.em.find(Product, {}, {
+      populate: ['user'],
+      fields: ['*', 'user.id', 'user.fullname', 'user.username'] as any
     });
   }
 
   async findAllByUser(userId: number): Promise<Product[]> {
-    return await this.productRepository.find({
-      where: { user_id: userId },
-      relations: ['user'],
-    });
+    return await this.productRepository.find(
+      { user: userId },
+      { populate: ['user'] }
+    );
   }
 
   async findOne(id: number): Promise<Product> {
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['user'],
-      select: {
-        user: {
-          id: true,
-          fullname: true,
-          username: true,
-        }
-      }
+    const product = await this.em.findOne(Product, { id }, {
+      populate: ['user'],
+      fields: ['*', 'user.id', 'user.fullname', 'user.username'] as any
     });
 
     if (!product) {
@@ -70,26 +59,26 @@ export class ProductService {
   }
 
   async update(id: number, updateProductDto: UpdateProductDto, userId: number): Promise<Product> {
-    // First, find the product and verify ownership
     const product = await this.findOne(id);
     
-    if (product.user_id !== userId) {
+    if (product.user.id !== userId) {
       throw new NotFoundException('Product not found or you do not have permission to update it');
     }
 
-    await this.productRepository.update(id, updateProductDto);
+    Object.assign(product, updateProductDto);
+    await this.em.persistAndFlush(product);
     
-    return this.findOne(id);
+    return product;
   }
 
   async remove(id: number, userId: number): Promise<{ message: string }> {
     const product = await this.findOne(id);
     
-    if (product.user_id !== userId) {
+    if (product.user.id !== userId) {
       throw new NotFoundException('Product not found or you do not have permission to delete it');
     }
 
-    await this.productRepository.delete(id);
+    await this.em.removeAndFlush(product);
     
     return { message: `Product with ID ${id} has been deleted successfully` };
   }

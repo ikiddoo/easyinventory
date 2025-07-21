@@ -1,7 +1,6 @@
-// src/user/user.service.ts
 import { Injectable, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { EntityRepository, EntityManager } from '@mikro-orm/core';
 import { User } from './entities/user.entity';
 import * as bcrypt from 'bcryptjs';
 
@@ -9,7 +8,8 @@ import * as bcrypt from 'bcryptjs';
 export class UserService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private userRepository: EntityRepository<User>,
+    private readonly em: EntityManager,
   ) {}
 
   async create(userData: {
@@ -20,9 +20,9 @@ export class UserService {
     username: string;
     password: string;
   }): Promise<User> {
-    // Check if email or username already exists
+    // check if email or username already exists
     const existingUser = await this.userRepository.findOne({
-      where: [
+      $or: [
         { email: userData.email },
         { username: userData.username }
       ]
@@ -32,50 +32,36 @@ export class UserService {
       throw new ConflictException('Email or username already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-    // Create user entity
-    const user = this.userRepository.create({
-      fullname: userData.fullname,
-      dob: userData.dob ? new Date(userData.dob) : undefined,
-      email: userData.email,
-      mobile: userData.mobile,
-      username: userData.username,
-      password: hashedPassword,
-    });
-
-    // Save to database
-    const savedUser = await this.userRepository.save(user);
-    console.log('User saved to database with ID:', savedUser.id);
+    const user = new User();
+    user.fullname = userData.fullname;
+    user.dob = userData.dob ? new Date(userData.dob) : undefined;
+    user.email = userData.email;
+    user.mobile = userData.mobile;
+    user.username = userData.username;
+    user.password = hashedPassword;
+    await this.em.persistAndFlush(user);
+    console.log('User saved to database with ID:', user.id);
     
-    return savedUser;
+    return user;
   }
 
-  async findByUsername(username: string): Promise<User | undefined> {
-    const user = await this.userRepository.findOne({
-      where: { username }
-    });
-    return user || undefined;
+  async findByUsername(username: string): Promise<User | null> {
+    return await this.userRepository.findOne({ username });
   }
 
-  async findById(id: number): Promise<User | undefined> {
-    const user = await this.userRepository.findOne({
-      where: { id }
-    });
-    return user || undefined;
+  async findById(id: number): Promise<User | null> {
+    return await this.userRepository.findOne({ id });
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
-    const user = await this.userRepository.findOne({
-      where: { email }
-    });
-    return user || undefined;
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.userRepository.findOne({ email });
   }
 
   async findAll(): Promise<User[]> {
-    return await this.userRepository.find({
-      select: ['id', 'fullname', 'email', 'username', 'mobile', 'dob', 'created_at', 'updated_at']
+    return await this.em.find(User, {}, {
+      fields: ['id', 'fullname', 'email', 'username', 'mobile', 'dob', 'created_at', 'updated_at'] as any
     });
   }
 }
