@@ -11,11 +11,11 @@ This is full stack web application for product management which is simple, intui
 
 1. **Environment variables**
    ```bash
-   DB_HOST=localhost
+   DB_HOST='localhost'
    DB_PORT=5433
-   DB_USERNAME=postgres
-   DB_PASSWORD=P@ssw0rd
-   DB_NAME=easyinvetory
+   DB_USERNAME='postgres'
+   DB_PASSWORD='P@ssw0rd'
+   DB_NAME='easyinvetory'
    JWT_SECRET=f8e9a4b7c2d1e5f6g3h8i9j0k1l2m3n4o5p6q7r8s9t0
    ```
 2. **Installing dependencies**
