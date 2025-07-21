@@ -1,6 +1,12 @@
 # easyinventory
 This is full stack web application for product management which is simple, intuitive and user-friendly.
 
+# Tech stacks
+1. API: NestJS (TypeScript)
+2. Frontend: React with TypeScript + Vite
+3. Database: PostgreSQL 15
+4. ORM: MikroORM
+
 # Api Setup
 
 1. **Environment variables**
