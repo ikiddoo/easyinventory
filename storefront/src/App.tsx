@@ -1,7 +1,7 @@
 import type { User } from './types/user';
 import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar/Navbar';
-import ProductListings from './components/ProductListing/ProductListings';
+import ProductManagement from './components/ProductManagement/ProductManagement';
 import AuthContainer from './components/AuthContainer/AuthContainer';
 
 const App: React.FC = () => {
@@ -45,7 +45,7 @@ const App: React.FC = () => {
   return (
     <>
       <Navbar user={user!} onLogout={handleLogout} />
-      <ProductListings token={token!} />
+      <ProductManagement token={token!} /> 
     </>
   );
 };

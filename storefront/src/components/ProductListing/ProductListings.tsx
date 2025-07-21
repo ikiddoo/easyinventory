@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import type { Product } from '../../types/product';
 import { apiService } from '../../service/apiservice';
 
-const ProductListings: React.FC<{ token: string }> = ({ token }) => {
+const ProductListings: React.FC<{ 
+  token: string;
+  onAddProduct: () => void;
+}> = ({ token, onAddProduct }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,7 +68,10 @@ const ProductListings: React.FC<{ token: string }> = ({ token }) => {
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="mb-0">My Products</h2>
-            <button className="btn btn-primary">
+            <button 
+              className="btn btn-primary"
+              onClick={onAddProduct}
+            >
               ➕ Add New Product
             </button>
           </div>
@@ -75,7 +81,10 @@ const ProductListings: React.FC<{ token: string }> = ({ token }) => {
               <div style={{ fontSize: '4rem' }}>📦</div>
               <h4 className="mt-3 text-muted">No products yet</h4>
               <p className="text-muted">Start by adding your first product!</p>
-              <button className="btn btn-primary">
+              <button 
+                className="btn btn-primary"
+                onClick={onAddProduct}
+              >
                 ➕ Add Product
               </button>
             </div>
