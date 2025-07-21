@@ -5,14 +5,15 @@ import { apiService } from '../../service/apiservice';
 const ProductListings: React.FC<{ 
   token: string;
   onAddProduct: () => void;
-}> = ({ token, onAddProduct }) => {
+  refreshTrigger?: number;
+}> = ({ token, onAddProduct, refreshTrigger }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchProducts = async () => {
     try {
@@ -27,13 +28,14 @@ const ProductListings: React.FC<{
   };
 
   const handleDelete = async (productId: number) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
+    if (!window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
 
     try {
       await apiService.deleteProduct(productId, token);
-      setProducts(products.filter(p => p.id !== productId));
+      setProducts(products.filter((p) => p.id !== productId));
+      alert("Product deleted successfully!");
     } catch (err: any) {
       alert(err.message);
     }
